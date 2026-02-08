@@ -1,4 +1,3 @@
-# ── extractor_basic.py ────────────────────────────────────────
 """
 extractor_basic.py - Basic article data extractor for Credible Sorcerer.
 
@@ -11,7 +10,7 @@ Usage:
 Note: 
     Only tested on Wikipedia & BBC articles so far.
 """
-# ─────────────────────────────────────────────────────────────
+
 
 import json
 import sys
@@ -19,10 +18,8 @@ import requests
 from bs4 import BeautifulSoup
 
 
-# ── Configuration ───────────────────────────────────────────────
 # Default URL used when no argument is provided.
 DEFAULT_URL = "https://en.wikipedia.org/wiki/Web_scraping"
-# ────────────────────────────────────────────────────────────────
 
 
 def fetch_html(url):
@@ -37,6 +34,22 @@ def fetch_html(url):
         return None
 
 
+def extract_json_ld(soup):
+    """Extract JSON-LD structured data from the page if available."""
+    for script in soup.find_all("script", attrs={"type": "application/ld+json"}):
+        try:
+            data = json.loads(script.string)
+            # Some sites wrap it in a list.
+            if isinstance(data, list):
+                data = data[0]
+            # Look for an article type.
+            if data.get("@type") in ("NewsArticle", "Article", "BlogPosting", "ReportageNewsArticle"):
+                return data
+        except (json.JSONDecodeError, TypeError):
+            continue
+    return None
+
+
 def extract_title(soup):
     """Return the text inside the <title> tag, or a fallback message."""
     title_tag = soup.find("title")
@@ -44,12 +57,79 @@ def extract_title(soup):
         return title_tag.string.strip()
     return "(no title found)"
 
+
+def extract_publication_date(soup):
+    """Return the publication date of the article if available."""
+    # Try JSON-LD structured data first (cleanest source).
+    ld = extract_json_ld(soup)
+    if ld and ld.get("datePublished"):
+        return ld["datePublished"].strip()
+
+    # Try common meta tag patterns.
+    candidates = [
+        {"property": "article:published_time"},  
+        {"name": "publication_date"},
+        {"name": "date"},
+        {"name": "pubdate"},
+        {"name": "DC.date.issued"},
+    ]
+    for attrs in candidates:
+        tag = soup.find("meta", attrs=attrs)
+        if tag and tag.get("content"):
+            return tag["content"].strip()
+
+    # Fall back to <time> elements with a datetime attribute.
+    time_tag = soup.find("time", attrs={"datetime": True})
+    if time_tag:
+        return time_tag["datetime"].strip()
+
+    return "(no publication date found)"
+
+
 def extract_author(soup):
     """Return the author of the article if available."""
-    author_meta = soup.find("meta", attrs={"name": "author"})
-    if author_meta and author_meta.get("content"):
-        return author_meta["content"].strip()
+    # Try JSON-LD structured data first (cleanest source).
+    ld = extract_json_ld(soup)
+    if ld and ld.get("author"):
+        author = ld["author"]
+        # Author can be a dict, a list of dicts, or a string.
+        if isinstance(author, list):
+            names = []
+            for a in author:
+                if isinstance(a, dict):
+                    names.append(a.get("name", ""))
+                else:
+                    names.append(a)
+            # Filter out empty names and join with commas.
+            filtered = []
+            for n in names:
+                if n:
+                    filtered.append(n)
+            return ", ".join(filtered)
+        if isinstance(author, dict):
+            return author.get("name", "(no author found)")
+        return str(author)
+
+    # Try common meta tag conventions in order of prevalence.
+    candidates = [
+        {"property": "article:author"},  # Open Graph
+        {"name": "author"},
+        {"name": "byl"},
+        {"name": "DC.creator"},
+    ]
+    for attrs in candidates:
+        tag = soup.find("meta", attrs=attrs)
+        if tag and tag.get("content"):
+            return tag["content"].strip()
+
+    # Fall back to elements with common author/byline class names.
+    for class_name in ["author", "byline"]:
+        author_el = soup.find(attrs={"class": lambda c: c and class_name in c.lower()})
+        if author_el and author_el.get_text(strip=True):
+            return author_el.get_text(strip=True)
+
     return "(no author found)"
+
 
 def extract_links(soup):
     """Return a list of all href values from <a> tags."""
@@ -60,7 +140,7 @@ def extract_links(soup):
     return links
 
 
-def extract_visible_text(soup):
+def extract_text(soup):
     """Return the visible text from the article body with extra whitespace collapsed."""
     # Try to find the main content area. Falls back to the full page if none found.
     body = (
@@ -93,25 +173,25 @@ def scrape_article(url):
         "url": url,
         "title": extract_title(soup),
         "author": extract_author(soup),
+        "publication_date": extract_publication_date(soup),
+        "link_count": len(extract_links(soup)),
+        "text_length": len(extract_text(soup)),
         "links": [],
-        "link_count": 0,
-        "visible_text_preview": "",
-        "visible_text_length": 0,
+        "text_preview": "",
     }
 
     links = extract_links(soup)
-    data["links"] = links
-    data["link_count"] = len(links)
+    # Uncomment to show all links
+    # data["links"] = links
 
-    text = extract_visible_text(soup)
+    text = extract_text(soup)
     # Store only the first 4000 characters as a preview to keep output readable.
-    data["visible_text_preview"] = text[:4000]
-    data["visible_text_length"] = len(text)
+    # Uncomment to show preview text
+    # data["text_preview"] = text[:4000]
     
     return data
 
 
-# ── Run ─────────────────────────────────────────────────────────
 if __name__ == "__main__":
     url = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_URL
     result = scrape_article(url)
@@ -120,30 +200,8 @@ if __name__ == "__main__":
     else:
         print("Scraping failed. Check the URL and your network connection.")
 
-# ───────────────────────────────────────────────────────────────
 
-
-
-
-# ── TODO's ─────────────────────────────────────────────────────────
-
-# TODO: Extract author and publication date if available
-#       Look for common meta tags like name = "author" and HTML structures
-
-# TODO: Add Visible Text Preview (Article Text Data) to Dict
-#       Return the full Article Text in Dict if needed for testing 
-#       Clean Up Visible Text Extraction
-
-# TODO: Add Links to Dict for Article Data
-#       Count Links and Add Link Count to Dict
 
 # TODO: Handle different site structures
 #       Not every site uses <article> or has the same layout
 #       Use library to auto detect article body if possible
-
-# TODO: Turn file into module with functions for reuse
-#       Refactor code into functions that can be imported and reused
-
-# TODO: Output into JSON format
-#       Format the final output as JSON for easy consumption
-# ───────────────────────────────────────────────────────────────
