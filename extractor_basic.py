@@ -178,17 +178,22 @@ def scrape_article(url):
         "text_length": len(extract_text(soup)),
         "links": [],
         "text_preview": "",
+        "text": "",
     }
 
     links = extract_links(soup)
     # Uncomment to show all links
-    # data["links"] = links
+    data["links"] = links
+
 
     text = extract_text(soup)
+    # Uncomment/Comment to show preview text
     # Store only the first 4000 characters as a preview to keep output readable.
-    # Uncomment to show preview text
     # data["text_preview"] = text[:4000]
     
+    # Uncomment/Comment to show full text (Can be very long )
+    data["text"] = text
+
     return data
 
 
