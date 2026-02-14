@@ -14,6 +14,7 @@ Note:
 
 import json
 import sys
+from copy import copy
 import requests
 from bs4 import BeautifulSoup
 
@@ -131,10 +132,21 @@ def extract_author(soup):
     return "(no author found)"
 
 
+def find_content_body(soup):
+    """Find the main content area of the page. Falls back to the full page if none found."""
+    return (
+        soup.find("article")
+        or soup.find("div", id="mw-content-text")  # Wikipedia-specific
+        or soup.find("div", {"role": "main"})
+        or soup
+    )
+
+
 def extract_links(soup):
-    """Return a list of all href values from <a> tags."""
+    """Return a list of all href values from <a> tags within the article body."""
+    body = find_content_body(soup)
     links = []
-    for tag in soup.find_all("a", href=True):
+    for tag in body.find_all("a", href=True):
         if tag["href"].startswith("http"):
             links.append(tag["href"])
     return links
@@ -142,19 +154,16 @@ def extract_links(soup):
 
 def extract_text(soup):
     """Return the visible text from the article body with extra whitespace collapsed."""
-    # Try to find the main content area. Falls back to the full page if none found.
-    body = (
-        soup.find("article")
-        or soup.find("div", id="mw-content-text")  # Wikipedia-specific
-        or soup.find("div", {"role": "main"})
-        or soup
-    )
+    # Work on a copy so decompose() doesn't affect the original soup.
+    body = copy(find_content_body(soup))
 
-    # Remove script and style elements so their contents don't leak into the text.
-    for hidden in body(["script", "style"]):
+    # Remove non-content elements.
+    for hidden in body(["script", "style", "nav", "footer", "header", "aside"]):
         hidden.decompose()
 
-    raw_text = body.get_text(separator=" ")
+    # Extract text only from content tags to avoid nav items, bios, and promos.
+    content_tags = body.find_all(["p", "h2", "h3", "h4", "blockquote", "li"])
+    raw_text = " ".join(tag.get_text(strip=True) for tag in content_tags if tag.get_text(strip=True))
 
     # Collapse runs of whitespace into single spaces and strip leading/trailing.
     cleaned = " ".join(raw_text.split())
@@ -169,30 +178,31 @@ def scrape_article(url):
 
     soup = BeautifulSoup(html, "html.parser")
 
+    links = extract_links(soup)
+    text = extract_text(soup)
+
     data = {
         "url": url,
         "title": extract_title(soup),
         "author": extract_author(soup),
         "publication_date": extract_publication_date(soup),
-        "link_count": len(extract_links(soup)),
-        "text_length": len(extract_text(soup)),
-        "links": [],
+        "link_count": len(links),
+        "text_length": len(text),
+        "links_preview": [],
+        "links": links,
         "text_preview": "",
-        "text": "",
+        "text": text,
     }
 
-    links = extract_links(soup)
-    # Uncomment to show all links
-    data["links"] = links
+
+    # Uncomment/Comment to show preview links
+    # Store only the first 10 links as a preview to keep output readable.
+    # data["links_preview"] = links[:10]
 
 
-    text = extract_text(soup)
     # Uncomment/Comment to show preview text
     # Store only the first 4000 characters as a preview to keep output readable.
     # data["text_preview"] = text[:4000]
-    
-    # Uncomment/Comment to show full text (Can be very long )
-    data["text"] = text
 
     return data
 
@@ -201,7 +211,7 @@ if __name__ == "__main__":
     url = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_URL
     result = scrape_article(url)
     if result:
-        print(json.dumps(result, indent=2))
+        print(json.dumps(result, indent=2, ensure_ascii=False))
     else:
         print("Scraping failed. Check the URL and your network connection.")
 
