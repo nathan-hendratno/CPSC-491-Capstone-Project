@@ -70,5 +70,15 @@
   </div>
 </div>
 
+<script>
+
+const data = JSON.parse(localStorage.getItem("analysisResult"));
+
+if (data) {
+  document.getElementById("summary").innerText = data.summary;
+}
+
+</script>
+
 </body>
 </html>

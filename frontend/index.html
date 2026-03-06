@@ -1,31 +1,93 @@
 <!DOCTYPE html>
 <html>
+
+<style>
+body {
+    background: linear-gradient(135deg, #eef2ff, #dbeafe);
+}
+</style>
+
 <head>
   <title>Credible Sorcerer</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
-<body class="bg-light">
+<body class="d-flex justify-content-center align-items-center vh-100 bg-light">
 
-<div class="container vh-100 d-flex justify-content-center align-items-center">
+<div class="card p-5 shadow d-flex flex-column"
+     style="width: 1000px; min-height: 480px; border-radius: 15px;">
 
-  <div class="card p-4 shadow" style="width: 480px;">
+  <div class="d-flex flex-column justify-content-between h-100">
 
-    <h1 class="text-center mb-3">Credible Sorcerer</h1>
+    <!-- Title Section -->
+    <div>
+      <h1 class="text-center mb-2">Credible Sorcerer</h1>
 
-    <p class="text-center text-muted mb-4">
-      Analyze the academic credibility of an article
-    </p>
+      <p class="text-center text-muted">
+        AI-powered article credibility analyzer
+      </p>
+    </div>
 
-    <input type="text" class="form-control mb-3" placeholder="Paste article URL">
+    <!-- Input Section -->
+    <div class="mt-4">
+      <input 
+        type="text" 
+        class="form-control form-control-lg"
+        placeholder="Paste article URL here..."
+      >
+    </div>
 
-    <a href="report.html"  class="btn btn-primary w-100">
-      Submit
-    </a>
+    <!-- Button Section -->
+    <div class="mt-4">
+      <button class="btn btn-primary btn-lg w-100" onclick="analyzeArticle()">
+        Analyze Article
+      </button>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="text-center mt-4" style="display:none;">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-2 text-muted">Analyzing article...</p>
+    </div>
 
   </div>
 
 </div>
+
+<script>
+function analyzeArticle() {
+
+  const input = document.querySelector("input");
+  const url = input.value;
+
+  if (!url) {
+    alert("Please enter a URL");
+    return;
+  }
+
+  // show loading spinner
+  document.getElementById("loadingSpinner").style.display = "block";
+
+  // simulate AI processing delay
+  setTimeout(() => {
+
+    // fake data so report page can display something
+    const fakeResult = {
+      url: url,
+      summary: "This article discusses the structure and formation of galaxies and how astronomers study them.",
+      tone: "Informational",
+      credibility_score: 82
+    };
+
+    localStorage.setItem("analysisResult", JSON.stringify(fakeResult));
+
+    // redirect to report page
+    window.location.href = "report.html";
+
+  }, 2000); // 2 second fake analysis
+
+}
+</script>
 
 </body>
 </html>
