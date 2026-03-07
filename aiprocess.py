@@ -1,9 +1,13 @@
-import requests
+import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from extractor_basic import scrape_article
+from openai import OpenAI
 
 app = FastAPI()
+
+# Initialize OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 class URLRequest(BaseModel):
     url: str
@@ -17,26 +21,26 @@ async def summarize_article(request: URLRequest):
     if not data or not data.get("text"):
         raise HTTPException(status_code=400, detail="Failed to scrape article")
 
-    article_text = data["text"][:8000]  # smaller chunk for local models
+    article_text = data["text"][:12000]  
 
-    # Send to Ollama (local llama model)
     try:
-        response = requests.post(
-            "http://localhost:11434/api/generate",
-            json={
-                "model": "llama3",   # change to "phi" or "gemma:2b" if RAM is low
-                "prompt": f"Summarize the following article clearly and concisely:\n\n{article_text}",
-                "stream": False
-            },
-            timeout=4800
+        response = client.chat.completions.create(
+            model="gpt-4o-mini", 
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant that summarizes news articles clearly and concisely."
+                },
+                {
+                    "role": "user",
+                    "content": f"Summarize the following article:\n\n{article_text}"
+                }
+            ],
+            temperature=0.3
         )
 
-        if response.status_code != 200:
-            raise HTTPException(status_code=500, detail="Ollama request failed")
+        summary = response.choices[0].message.content
 
-        summary = response.json()["response"]
-
-        # Return to frontend
         return {
             "title": data["title"],
             "author": data["author"],
@@ -44,5 +48,5 @@ async def summarize_article(request: URLRequest):
             "summary": summary.strip()
         }
 
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
