@@ -26,54 +26,106 @@
 
 <!-- MAIN CONTENT -->
 <div class="container mt-5">
-  <div class="row">
+  <div class="row g-4">
 
-    <!-- LEFT COLUMN: DOCUMENT -->
+    <!-- LEFT: DOCUMENT -->
     <div class="col-md-6">
-      <div class="card p-4" style="height: 500px; border-radius: 20px;">
-        <h4 class="fw-bold">Document</h4>
+      <div class="card p-4 shadow" style="height: 500px; border-radius: 20px; overflow-y: auto;">
+        
+        <h4 class="fw-bold mb-3">Document</h4>
 
-        <div class="mt-3 text-muted">
-          Document content or preview goes here
+        <div id="documentContent" class="text-muted">
+          Document content or preview goes here...
         </div>
+
       </div>
     </div>
 
-    <!-- RIGHT COLUMN -->
-    <div class="col-md-6 d-flex flex-column align-items-center">
+    <!-- RIGHT: KEY POINTS / CITATIONS -->
+    <div class="col-md-6">
+      <div class="card p-4 shadow" style="height: 500px; border-radius: 20px; overflow-y: auto;">
+        
+        <h4 class="fw-bold mb-3">Key Points</h4>
 
-      <!-- KEY POINTS CARD -->
-      <div class="card p-4 mb-4"
-           style="width: 80%; height: 250px; border-radius: 20px;">
-        <p class="text-center mb-0">
-          Key points, citations and related articles
-        </p>
-      </div>
+        <ul id="keyPoints" class="mb-4">
+          <li>Key point 1</li>
+          <li>Key point 2</li>
+        </ul>
 
-      <!-- BUTTONS -->
-      <div class="d-grid gap-3" style="width: 200px;">
+        <h5 class="fw-bold">Citations</h5>
+        <ul id="citations" class="mb-4">
+          <li>Source 1</li>
+        </ul>
 
-        <!-- Score goes back to report page -->
-        <a href="score.html" class="btn btn-outline-secondary">
-          Score
-        </a>
-
-        <!-- Back also goes to report page -->
-        <a href="report.html" class="btn btn-outline-secondary">
-          Back
-        </a>
-
-        <!-- Home goes to index -->
-        <a href="index.html" class="btn btn-outline-secondary">
-          Home
-        </a>
+        <h5 class="fw-bold">Related Articles</h5>
+        <ul id="relatedArticles">
+          <li>Article link</li>
+        </ul>
 
       </div>
-
     </div>
 
   </div>
 </div>
 
+<script>
+window.onload = function() {
+
+  const data = JSON.parse(localStorage.getItem("analysisResult"));
+
+  if (!data) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  // LEFT SIDE (document preview)
+  document.getElementById("documentContent").innerText =
+    data.summary || "No content available";
+
+  // RIGHT SIDE (mock data for now)
+  const keyPoints = [
+    "Main topic of the article",
+    "Important findings or arguments",
+    "Key conclusion"
+  ];
+
+  const citations = [
+    data.url || "Original article source"
+  ];
+
+  const related = [
+    "Related article 1",
+    "Related article 2"
+  ];
+
+  // Fill key points
+  const kpList = document.getElementById("keyPoints");
+  kpList.innerHTML = "";
+  keyPoints.forEach(point => {
+    const li = document.createElement("li");
+    li.innerText = point;
+    kpList.appendChild(li);
+  });
+
+  // Fill citations
+  const citList = document.getElementById("citations");
+  citList.innerHTML = "";
+  citations.forEach(c => {
+    const li = document.createElement("li");
+    li.innerText = c;
+    citList.appendChild(li);
+  });
+
+  // Fill related articles
+  const relList = document.getElementById("relatedArticles");
+  relList.innerHTML = "";
+  related.forEach(r => {
+    const li = document.createElement("li");
+    li.innerText = r;
+    relList.appendChild(li);
+  });
+
+};
+</script>
 </body>
 </html>
