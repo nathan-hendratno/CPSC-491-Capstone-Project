@@ -3,8 +3,18 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from extractor_basic import scrape_article
 from openai import OpenAI
+from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow all for now
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
