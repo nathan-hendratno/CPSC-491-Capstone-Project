@@ -55,7 +55,7 @@ body {
 </div>
 
 <script>
-function analyzeArticle() {
+async function analyzeArticle() {
 
   const input = document.querySelector("input");
   const url = input.value;
@@ -65,26 +65,37 @@ function analyzeArticle() {
     return;
   }
 
-  // show loading spinner
   document.getElementById("loadingSpinner").style.display = "block";
 
-  // simulate AI processing delay
-  setTimeout(() => {
+  try {
 
-    // fake data so report page can display something
-    const fakeResult = {
-      url: url,
-      summary: "This article discusses the structure and formation of galaxies and how astronomers study them.",
-      tone: "Informational",
-      credibility_score: 82
-    };
+    const response = await fetch("http://127.0.0.1:8000/summarize", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ url: url })
+    });
 
-    localStorage.setItem("analysisResult", JSON.stringify(fakeResult));
+    if (!response.ok) {
+      throw new Error("Server error");
+    }
 
-    // redirect to report page
+    const result = await response.json();
+
+    // store result for next page
+    localStorage.setItem("analysisResult", JSON.stringify(result));
+
+    // go to report page
     window.location.href = "report.html";
 
-  }, 2000); // 2 second fake analysis
+  } catch (error) {
+
+    console.error(error);
+    alert("Something went wrong");
+    location.reload();
+
+  }
 
 }
 </script>

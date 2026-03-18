@@ -29,12 +29,16 @@
   <div class="row">
 
     <!-- LEFT COLUMN -->
-    <div class="col-md-5">
-      <div class="card p-4" style="height: 400px; border-radius: 20px;">
-        <h4 class="fw-bold">Document</h4>
+    <div class="card p-4" style="height: 400px; border-radius: 20px; overflow-y: auto;">
+        <h4 class="fw-bold" id="title">Document</h4>
 
-        <div class="mt-3 text-muted">
-          Document preview goes here
+        <div class="mt-2 text-muted" id="author"></div>
+        <div class="text-muted mb-2" id="date"></div>
+
+        <hr>
+
+        <div class="mt-2" id="summary">
+          Summary will appear here...
         </div>
       </div>
     </div>
@@ -71,13 +75,21 @@
 </div>
 
 <script>
+window.onload = function() {
 
-const data = JSON.parse(localStorage.getItem("analysisResult"));
+  const data = JSON.parse(localStorage.getItem("analysisResult"));
 
-if (data) {
-  document.getElementById("summary").innerText = data.summary;
-}
+  if (!data) {
+    window.location.href = "index.html";
+    return;
+  }
 
+  document.getElementById("title").innerText = data.title || "No title";
+  document.getElementById("summary").innerText = data.summary || "No summary";
+  document.getElementById("author").innerText = "Author: " + (data.author || "Unknown");
+  document.getElementById("date").innerText = "Published: " + (data.publication_date || "Unknown");
+
+};
 </script>
 
 </body>
