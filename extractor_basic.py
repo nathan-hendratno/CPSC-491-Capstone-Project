@@ -1,16 +1,12 @@
 """
-extractor_basic.py - Basic article data extractor for Credible Sorcerer.
+Basic article data extractor for Credible Sorcerer.
 
 Fetches a web page and extracts the title, links, and visible text
 using requests + BeautifulSoup.
 
 Usage:
     python extractor_basic.py [URL]
-
-Note: 
-    Only tested on Wikipedia & BBC articles so far.
 """
-
 
 import json
 import sys
@@ -127,7 +123,19 @@ def extract_author(soup):
     for class_name in ["author", "byline"]:
         author_el = soup.find(attrs={"class": lambda c: c and class_name in c.lower()})
         if author_el and author_el.get_text(strip=True):
-            return author_el.get_text(strip=True)
+            text = author_el.get_text(strip=True)
+            # Strip common prefixes like "Authors:" or "By:".
+            for prefix in ("Authors:", "Author:", "By:", "By "):
+                if text.lower().startswith(prefix.lower()):
+                    text = text[len(prefix):].strip()
+                    break
+            # Strip organization name or extra info after separators.
+            for sep in ("|", "·", "—"):
+                if sep in text:
+                    text = text.split(sep)[0].strip()
+                    break
+            if text:
+                return text
 
     return "(no author found)"
 
@@ -138,6 +146,7 @@ def find_content_body(soup):
         soup.find("article")
         or soup.find("div", id="mw-content-text")  # Wikipedia-specific
         or soup.find("div", {"role": "main"})
+        or soup.find("main")
         or soup
     )
 
@@ -153,19 +162,16 @@ def extract_links(soup):
 
 
 def extract_text(soup):
-    """Return the visible text from the article body with extra whitespace collapsed."""
-    # Work on a copy so decompose() doesn't affect the original soup.
+    """Return visible text from the article body. Strips non-content elements,
+    targets content tags only, and collapses extra whitespace."""
     body = copy(find_content_body(soup))
 
-    # Remove non-content elements.
     for hidden in body(["script", "style", "nav", "footer", "header", "aside"]):
         hidden.decompose()
 
-    # Extract text only from content tags to avoid nav items, bios, and promos.
     content_tags = body.find_all(["p", "h2", "h3", "h4", "blockquote", "li"])
-    raw_text = " ".join(tag.get_text(strip=True) for tag in content_tags if tag.get_text(strip=True))
+    raw_text = " ".join(tag.get_text(separator=" ", strip=True) for tag in content_tags if tag.get_text(strip=True))
 
-    # Collapse runs of whitespace into single spaces and strip leading/trailing.
     cleaned = " ".join(raw_text.split())
     return cleaned
 
@@ -188,22 +194,9 @@ def scrape_article(url):
         "publication_date": extract_publication_date(soup),
         "link_count": len(links),
         "text_length": len(text),
-        "links_preview": [],
         "links": links,
-        "text_preview": "",
         "text": text,
     }
-
-
-    # Uncomment/Comment to show preview links
-    # Store only the first 10 links as a preview to keep output readable.
-    # data["links_preview"] = links[:10]
-
-
-    # Uncomment/Comment to show preview text
-    # Store only the first 4000 characters as a preview to keep output readable.
-    # data["text_preview"] = text[:4000]
-
     return data
 
 
@@ -215,8 +208,3 @@ if __name__ == "__main__":
     else:
         print("Scraping failed. Check the URL and your network connection.")
 
-
-
-# TODO: Handle different site structures
-#       Not every site uses <article> or has the same layout
-#       Use library to auto detect article body if possible
