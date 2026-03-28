@@ -1,1 +1,7 @@
 .venv/
+__pycache__/
+.DS_Store
+.idea/
+tests/test_outputs_url.json
+tests/test_outputs_pdf.json
+tests/pdfs/
