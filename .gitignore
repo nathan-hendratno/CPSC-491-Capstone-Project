@@ -2,6 +2,6 @@
 __pycache__/
 .DS_Store
 .idea/
-tests/test_outputs.json
+tests/test_outputs_url.json
 tests/test_outputs_pdf.json
-tests/test.pdf
+tests/pdfs/

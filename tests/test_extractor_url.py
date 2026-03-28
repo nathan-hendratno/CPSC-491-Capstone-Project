@@ -2,7 +2,7 @@
 Run extractor_basic.py against a set of test URLs.
 
 Usage:
-    python tests/test_extractor.py
+    python tests/test_extractor_url.py
 """
 
 import json
@@ -50,7 +50,7 @@ TEST_URLS = [
     ("University of Washington Libraries", "https://guides.lib.uw.edu")
 ]
 
-OUTPUT_FILE = os.path.join(TESTS_DIR, "test_outputs.json")
+OUTPUT_FILE = os.path.join(TESTS_DIR, "test_outputs_url.json")
 
 
 if __name__ == "__main__":
