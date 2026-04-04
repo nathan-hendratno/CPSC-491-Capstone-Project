@@ -49,8 +49,8 @@
       <h4 class="fw-bold mb-3">Credibility Score:</h4>
 
       <!-- PROGRESS BAR -->
-      <div class="progress mb-4" style="height: 10px;">
-        <div class="progress-bar bg-primary" style="width: 70%;"></div>
+      <div class="progress mb-4" style="height: 20px;">
+        <div id="scoreBar" class="progress-bar bg-primary" style="width: 0%;">0%</div>
       </div>
 
       <!-- BUTTONS -->
@@ -88,6 +88,24 @@ window.onload = function() {
   document.getElementById("summary").innerText = data.summary || "No summary";
   document.getElementById("author").innerText = "Author: " + (data.author || "Unknown");
   document.getElementById("date").innerText = "Published: " + (data.publication_date || "Unknown");
+
+  // update progress bar with credibility score
+  const score = Math.round(data.score || 0);
+  const scoreBar = document.getElementById("scoreBar");
+
+  scoreBar.style.width = score + "%";
+  scoreBar.innerText = score + "%";
+
+  if (score >= 75) {
+    scoreBar.classList.remove("bg-primary");
+    scoreBar.classList.add("bg-success");
+  } else if (score >= 50) {
+    scoreBar.classList.remove("bg-primary");
+    scoreBar.classList.add("bg-warning");
+  } else {
+    scoreBar.classList.remove("bg-primary");
+    scoreBar.classList.add("bg-danger");
+  }
 
 };
 </script>

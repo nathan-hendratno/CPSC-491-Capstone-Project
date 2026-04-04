@@ -78,50 +78,37 @@ window.onload = function() {
     return;
   }
 
-  // LEFT SIDE (document preview)
+  // LEFT SIDE: document preview
   document.getElementById("documentContent").innerText =
-    data.summary || "No content available";
+    data.text_preview || "No content available";
 
-  // RIGHT SIDE (mock data for now)
-  const keyPoints = [
-    "Main topic of the article",
-    "Important findings or arguments",
-    "Key conclusion"
-  ];
-
-  const citations = [
-    data.url || "Original article source"
-  ];
-
-  const related = [
-    "Related article 1",
-    "Related article 2"
-  ];
-
-  // Fill key points
+  // RIGHT SIDE: key points
   const kpList = document.getElementById("keyPoints");
   kpList.innerHTML = "";
-  keyPoints.forEach(point => {
+
+  (data.key_points || []).forEach(point => {
     const li = document.createElement("li");
     li.innerText = point;
     kpList.appendChild(li);
   });
 
-  // Fill citations
+  // RIGHT SIDE: citations / links
   const citList = document.getElementById("citations");
   citList.innerHTML = "";
-  citations.forEach(c => {
+
+  (data.links || []).slice(0, 5).forEach(link => {
     const li = document.createElement("li");
-    li.innerText = c;
+    li.innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
     citList.appendChild(li);
   });
 
-  // Fill related articles
-  const relList = document.getElementById("relatedArticles");
+  // RIGHT SIDE: related articles (using topics for now)
+    const relList = document.getElementById("relatedArticles");
   relList.innerHTML = "";
-  related.forEach(r => {
+
+  (data.related_articles || []).forEach(article => {
     const li = document.createElement("li");
-    li.innerText = r;
+    li.innerHTML = `<a href="${article.url}" target="_blank">${article.title}</a>`;
     relList.appendChild(li);
   });
 

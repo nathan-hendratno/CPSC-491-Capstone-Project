@@ -30,30 +30,31 @@
 
     <!-- DOCUMENT -->
     <div class="col-md-4">
-      <div class="card p-4" style="height: 500px; border-radius: 20px;">
+      <div class="card p-4" style="height: 500px; border-radius: 20px; overflow-y: auto;">
         <h4 class="fw-bold">Document</h4>
-        <p class="text-muted mt-3">Document content goes here</p>
+        <p class="text-muted mt-3" id="documentPreview">Document content goes here</p>
       </div>
     </div>
 
     <!-- SCORE BREAKDOWN -->
     <div class="col-md-4">
       <div class="card p-4" style="height: 500px; border-radius: 20px;">
-        <h5 class="fw-bold text-center mb-4">Score: %</h5>
+        <h5 class="fw-bold text-center mb-4">Score: <span id="overallScore">--</span></h5>
 
-        <p>URL = 25 / 25</p>
-        <p>Infor = 20 / 25</p>
-        <p>Related Sources = 20 / 25</p>
-        <p>AI Generation = 15 / 25</p>
+        <p>Title / Metadata = <span id="metaScore">--</span></p>
+        <p>Authorship = <span id="authorScore">--</span></p>
+        <p>Publication Date = <span id="dateScore">--</span></p>
+        <p>Potential Citations = <span id="citationScore">--</span></p>
+        <p>AI Generation = <span id="aiScore">--</span></p>
       </div>
     </div>
 
     <!-- EXPLANATION -->
     <div class="col-md-4 d-flex flex-column align-items-center">
 
-      <div class="card p-4 mb-4" style="height: 350px; border-radius: 20px; width: 100%;">
+      <div class="card p-4 mb-4" style="height: 350px; border-radius: 20px; width: 100%; overflow-y: auto;">
         <h5 class="fw-bold text-center">Explanation</h5>
-        <p class="text-muted mt-3 text-center">
+        <p class="text-muted mt-3" id="scoreExplanation">
           Explanation of score breakdown goes here
         </p>
       </div>
@@ -78,5 +79,52 @@
   </div>
 </div>
 
+<script>
+window.onload = function () {
+  const data = JSON.parse(localStorage.getItem("analysisResult"));
+
+  if (!data) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  // document preview
+  document.getElementById("documentPreview").innerText =
+    data.text_preview || data.summary || "No content available";
+
+  // overall score
+  document.getElementById("overallScore").innerText =
+    (data.score ?? "--") + "/100";
+
+  // explanation
+  document.getElementById("scoreExplanation").innerText =
+    data.explanation || "No explanation available.";
+
+  // basic parsing from explanation text
+  const explanation = data.explanation || "";
+
+  function extractLineValue(prefix) {
+    const lines = explanation.split("\n");
+    const line = lines.find(l => l.includes(prefix));
+    if (!line) return "--";
+    return line.split(" ")[0];
+  }
+
+  document.getElementById("metaScore").innerText =
+    extractLineValue("Title");
+
+  document.getElementById("authorScore").innerText =
+    extractLineValue("Authorship");
+
+  document.getElementById("dateScore").innerText =
+    extractLineValue("Publication date");
+
+  document.getElementById("citationScore").innerText =
+    extractLineValue("citation links");
+
+  document.getElementById("aiScore").innerText =
+    extractLineValue("AI Detection");
+};
+</script>
 </body>
 </html>

@@ -56,9 +56,8 @@ body {
 
 <script>
 async function analyzeArticle() {
-
   const input = document.querySelector("input");
-  const url = input.value;
+  const url = input.value.trim();
 
   if (!url) {
     alert("Please enter a URL");
@@ -68,7 +67,6 @@ async function analyzeArticle() {
   document.getElementById("loadingSpinner").style.display = "block";
 
   try {
-
     const response = await fetch("http://127.0.0.1:8000/summarize", {
       method: "POST",
       headers: {
@@ -78,25 +76,22 @@ async function analyzeArticle() {
     });
 
     if (!response.ok) {
-      throw new Error("Server error");
+      throw new Error("Backend request failed");
     }
 
     const result = await response.json();
 
-    // store result for next page
+    // save backend result so the next page can use it
     localStorage.setItem("analysisResult", JSON.stringify(result));
 
     // go to report page
     window.location.href = "report.html";
 
   } catch (error) {
-
-    console.error(error);
-    alert("Something went wrong");
+    console.error("Error:", error);
+    alert("Analysis failed.");
     location.reload();
-
   }
-
 }
 </script>
 
