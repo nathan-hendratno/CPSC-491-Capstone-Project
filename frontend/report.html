@@ -56,6 +56,10 @@
             <div id="scoreBar" class="progress-bar bg-primary"
                  style="width: 0%; border-radius: 12px;">0%</div>
           </div>
+          
+          <div class="text-muted text-center" id="scoreText">
+            Overall credibility analysis result
+          </div>
 
         </div>
 
@@ -94,23 +98,72 @@ window.onload = function() {
   document.getElementById("author").innerText = "Author: " + (data.author || "Unknown");
   document.getElementById("date").innerText = "Published: " + (data.publication_date || "Unknown");
 
-  // update progress bar with credibility score
   const score = Math.round(data.score || 0);
   const scoreBar = document.getElementById("scoreBar");
+  const scoreText = document.getElementById("scoreText");
 
   scoreBar.style.width = score + "%";
   scoreBar.innerText = score + "%";
 
   if (score >= 75) {
-    scoreBar.classList.remove("bg-primary");
+    scoreBar.classList.remove("bg-primary", "bg-warning", "bg-danger");
     scoreBar.classList.add("bg-success");
   } else if (score >= 50) {
-    scoreBar.classList.remove("bg-primary");
+    scoreBar.classList.remove("bg-primary", "bg-success", "bg-danger");
     scoreBar.classList.add("bg-warning");
   } else {
-    scoreBar.classList.remove("bg-primary");
+    scoreBar.classList.remove("bg-primary", "bg-success", "bg-warning");
     scoreBar.classList.add("bg-danger");
   }
+
+  // Structured breakdown
+  const breakdown = data.score_breakdown || {};
+
+  function ratio(part) {
+    if (!part || !part.total) return 0;
+    return part.earned / part.total;
+  }
+
+  const titleRatio = ratio(breakdown.title);
+  const authorRatio = ratio(breakdown.author);
+  const dateRatio = ratio(breakdown.date);
+  const linksRatio = ratio(breakdown.links);
+  const aiRatio = ratio(breakdown.ai);
+
+  // Group signals
+  const metadataAvg = (titleRatio + authorRatio + dateRatio) / 3;
+  const citationStrength = linksRatio;
+  const aiConfidence = aiRatio;
+
+  let metadataText = "";
+  let citationText = "";
+  let aiText = "";
+
+  if (metadataAvg >= 0.8) {
+    metadataText = "Strong metadata";
+  } else if (metadataAvg >= 0.5) {
+    metadataText = "Moderate metadata";
+  } else {
+    metadataText = "Weak metadata";
+  }
+
+  if (citationStrength >= 0.8) {
+    citationText = "strong citation support";
+  } else if (citationStrength >= 0.5) {
+    citationText = "limited citation support";
+  } else {
+    citationText = "very weak citation support";
+  }
+
+  if (aiConfidence >= 0.8) {
+    aiText = "strong AI confidence";
+  } else if (aiConfidence >= 0.5) {
+    aiText = "moderate AI confidence";
+  } else {
+    aiText = "weak AI confidence";
+  }
+
+  scoreText.innerText = `${metadataText}, ${citationText}, ${aiText}.`;
 
 };
 </script>
