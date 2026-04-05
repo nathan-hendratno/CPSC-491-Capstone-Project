@@ -116,6 +116,7 @@ Article:
         cred = Credibility(article=article_for_score)
         score = cred.calculate_score()
         explanation = cred.get_explanation()
+        score_breakdown = cred.get_score_breakdown()
 
         related_articles = []
 
@@ -140,7 +141,8 @@ Article:
             "search_queries": analysis.get("search_queries", []),
             "related_articles": related_articles,
             "score": score,
-            "explanation": explanation
+            "explanation": explanation,
+            "score_breakdown": score_breakdown
         }
 
     except json.JSONDecodeError:

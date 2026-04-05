@@ -38,26 +38,88 @@
 
     <!-- SCORE BREAKDOWN -->
     <div class="col-md-4">
-      <div class="card p-4" style="height: 500px; border-radius: 20px;">
+      <div class="card p-4" style="height: 500px; border-radius: 20px; overflow-y: auto;">
         <h5 class="fw-bold text-center mb-4">Score: <span id="overallScore">--</span></h5>
 
-        <p>Title / Metadata = <span id="metaScore">--</span></p>
-        <p>Authorship = <span id="authorScore">--</span></p>
-        <p>Publication Date = <span id="dateScore">--</span></p>
-        <p>Potential Citations = <span id="citationScore">--</span></p>
-        <p>AI Generation = <span id="aiScore">--</span></p>
+        <div class="mb-4">
+          <div class="d-flex justify-content-between">
+            <span>Title / Metadata</span>
+            <span id="metaScoreText">--</span>
+          </div>
+          <div class="progress mt-2" style="height: 18px;">
+            <div id="metaScoreBar" class="progress-bar" style="width: 0%;">0%</div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="d-flex justify-content-between">
+            <span>Authorship</span>
+            <span id="authorScoreText">--</span>
+          </div>
+          <div class="progress mt-2" style="height: 18px;">
+            <div id="authorScoreBar" class="progress-bar" style="width: 0%;">0%</div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="d-flex justify-content-between">
+            <span>Publication Date</span>
+            <span id="dateScoreText">--</span>
+          </div>
+          <div class="progress mt-2" style="height: 18px;">
+            <div id="dateScoreBar" class="progress-bar" style="width: 0%;">0%</div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="d-flex justify-content-between">
+            <span>Potential Citations</span>
+            <span id="citationScoreText">--</span>
+          </div>
+          <div class="progress mt-2" style="height: 18px;">
+            <div id="citationScoreBar" class="progress-bar" style="width: 0%;">0%</div>
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <div class="d-flex justify-content-between">
+            <span>AI Generation</span>
+            <span id="aiScoreText">--</span>
+          </div>
+          <div class="progress mt-2" style="height: 18px;">
+            <div id="aiScoreBar" class="progress-bar" style="width: 0%;">0%</div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- EXPLANATION -->
     <div class="col-md-4 d-flex flex-column align-items-center">
 
-      <div class="card p-4 mb-4" style="height: 350px; border-radius: 20px; width: 100%; overflow-y: auto;">
-        <h5 class="fw-bold text-center">Explanation</h5>
-        <p class="text-muted mt-3" id="scoreExplanation">
+      <div class="card p-4 mb-4 shadow-sm" style="height: 350px; border-radius: 20px; width: 100%; overflow-y: auto;">
+      <h5 class="fw-bold text-center mb-3">Explanation</h5>
+
+      <div id="scoreVerdict" class="text-center fw-semibold mb-3 text-primary">
+        Overall credibility assessment
+      </div>
+
+      <div class="row text-center mb-3">
+        <div class="col-6">
+          <div class="small text-muted">Tone</div>
+          <div id="toneDisplay" class="fw-semibold">--</div>
+        </div>
+        <div class="col-6">
+          <div class="small text-muted">Bias</div>
+          <div id="biasDisplay" class="fw-semibold">--</div>
+        </div>
+      </div>
+
+      <div class="p-3 bg-light rounded" style="min-height: 170px;">
+        <p class="text-muted small mb-0" id="scoreExplanation">
           Explanation of score breakdown goes here
         </p>
       </div>
+    </div>
 
       <!-- BUTTONS -->
       <div class="d-grid gap-3" style="width: 200px;">
@@ -88,42 +150,113 @@ window.onload = function () {
     return;
   }
 
-  // document preview
+  // Left card: document preview
   document.getElementById("documentPreview").innerText =
     data.text_preview || data.summary || "No content available";
 
-  // overall score
-  document.getElementById("overallScore").innerText =
-    (data.score ?? "--") + "/100";
+  // Overall score
+  const overallScore = Math.round(data.score || 0);
+  document.getElementById("overallScore").innerText = overallScore + "/100";
 
-  // explanation
+  // Explanation
   document.getElementById("scoreExplanation").innerText =
     data.explanation || "No explanation available.";
 
-  // basic parsing from explanation text
-  const explanation = data.explanation || "";
+  // Tone + Bias
+  document.getElementById("toneDisplay").innerText = data.tone || "--";
+  document.getElementById("biasDisplay").innerText = data.bias || "--";
 
-  function extractLineValue(prefix) {
-    const lines = explanation.split("\n");
-    const line = lines.find(l => l.includes(prefix));
-    if (!line) return "--";
-    return line.split(" ")[0];
+  // Verdict text
+  const verdict = document.getElementById("scoreVerdict");
+  if (overallScore >= 75) {
+    verdict.innerText = "This source appears highly credible.";
+    verdict.classList.remove("text-warning", "text-danger");
+    verdict.classList.add("text-success");
+  } else if (overallScore >= 50) {
+    verdict.innerText = "This source appears moderately credible.";
+    verdict.classList.remove("text-success", "text-danger");
+    verdict.classList.add("text-warning");
+  } else {
+    verdict.innerText = "This source appears to have low credibility.";
+    verdict.classList.remove("text-success", "text-warning");
+    verdict.classList.add("text-danger");
   }
 
-  document.getElementById("metaScore").innerText =
-    extractLineValue("Title");
+  // NEW: use structured breakdown directly
+  const breakdown = data.score_breakdown || {};
 
-  document.getElementById("authorScore").innerText =
-    extractLineValue("Authorship");
+  // Helper: convert earned/total into percent
+  function scoreToPercent(earned, total) {
+    if (!total || isNaN(earned) || isNaN(total)) return 0;
+    return Math.round((earned / total) * 100);
+  }
 
-  document.getElementById("dateScore").innerText =
-    extractLineValue("Publication date");
+  // Helper: update mini bar
+  function updateBar(barId, textId, earned, total) {
+    const bar = document.getElementById(barId);
+    const text = document.getElementById(textId);
 
-  document.getElementById("citationScore").innerText =
-    extractLineValue("citation links");
+    const percent = scoreToPercent(earned, total);
+    const label = `${earned ?? "--"}/${total ?? "--"}`;
 
-  document.getElementById("aiScore").innerText =
-    extractLineValue("AI Detection");
+    text.innerText = label;
+    bar.style.width = percent + "%";
+    bar.innerText = percent + "%";
+
+    bar.classList.remove("bg-success", "bg-warning", "bg-danger", "bg-primary");
+
+    if (percent >= 75) {
+      bar.classList.add("bg-success");
+    } else if (percent >= 50) {
+      bar.classList.add("bg-warning");
+    } else {
+      bar.classList.add("bg-danger");
+    }
+  }
+
+  // Expected backend structure:
+  // score_breakdown: {
+  //   title: { earned: 10, total: 10 },
+  //   author: { earned: 30, total: 30 },
+  //   date: { earned: 15, total: 15 },
+  //   links: { earned: 5, total: 5 },
+  //   ai: { earned: 24, total: 40 }
+  // }
+
+  updateBar(
+    "metaScoreBar",
+    "metaScoreText",
+    breakdown.title?.earned ?? 0,
+    breakdown.title?.total ?? 10
+  );
+
+  updateBar(
+    "authorScoreBar",
+    "authorScoreText",
+    breakdown.author?.earned ?? 0,
+    breakdown.author?.total ?? 30
+  );
+
+  updateBar(
+    "dateScoreBar",
+    "dateScoreText",
+    breakdown.date?.earned ?? 0,
+    breakdown.date?.total ?? 15
+  );
+
+  updateBar(
+    "citationScoreBar",
+    "citationScoreText",
+    breakdown.links?.earned ?? 0,
+    breakdown.links?.total ?? 5
+  );
+
+  updateBar(
+    "aiScoreBar",
+    "aiScoreText",
+    breakdown.ai?.earned ?? 0,
+    breakdown.ai?.total ?? 40
+  );
 };
 </script>
 </body>

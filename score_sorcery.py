@@ -33,6 +33,10 @@ class Credibility:
     # returns the explanation as a string
     def get_explanation(self):
         return self.explanation
+    
+    # NEW: returns structured score breakdown for frontend
+    def get_score_breakdown(self):
+        return self.score_breakdown
 
     # calculates and returns the final score based on factors as a number
     def calculate_score(self):
@@ -50,44 +54,82 @@ class Credibility:
 
         # Having a title is worth 10% of credibility
         if title == "(no title found)":
-            self.explanation += "0/10 Title Missing\n"
+            title_earned = 0
+            self.explanation += "✖ No clear title was found for this article.\n"
             deduction += 10
         else:
-            self.explanation += "10/10 Title present\n"
+            title_earned = 10
+            self.explanation += "✔ The article includes a clear and identifiable title.\n"
 
         # Having an author is worth 30% of credibility
         if author == "(no author found)":
-            self.explanation += "0/30 Authorship missing\n"
+            author_earned = 0
+            self.explanation += "✖ No author information was found, which lowers credibility.\n"
             deduction += 30
         else:
-            self.explanation += "30/30 Authorship present\n"
+            author_earned = 30
+            self.explanation += "✔ The article provides author information.\n"
 
         # Having a publication date is worth 15% of credibility
         if publish_date == "(no publication date found)":
-            self.explanation += "0/15 Publication date missing\n"
+            date_earned = 0
+            self.explanation += "✖ No publication date was found.\n"
             deduction += 15
         else:
-            self.explanation += "15/15 Publication date present\n"
+            date_earned = 15
+            self.explanation += "✔ A publication date is available.\n"
 
         # Having at least 3 links (presumably citations) is worth 5% of credibility, on account of the links not necessarily being citations.
         if link_count < 3:
-            self.explanation += "0/5 Not enough potential citation links\n"
+            links_earned = 0
+            self.explanation += "✖ Very few references or links were found in the article.\n"
             deduction += 5
         else:
-            self.explanation += "5/5 Enough potential citation links present\n"
+            links_earned = 5
+            self.explanation += "✔ The article contains multiple references or links.\n"
 
         # Chance of AI generation is worth 40% of credibility
         ai_gen = sorce(article_text)
         ai_deduction = (40 * ai_gen)
         deduction += ai_deduction
+        ai_earned = round(40 - ai_deduction, 2)
         # NEW: format nicely to 2 decimal places
-        self.explanation += f"{40 - ai_deduction:.2f}/40 AI Detection\n"
+        if ai_gen < 0.3:
+            self.explanation += "✔ The writing appears to be mostly human-generated.\n"
+        elif ai_gen < 0.6:
+            self.explanation += "⚠ The writing shows some signs of AI assistance.\n"
+        else:
+            self.explanation += "✖ The writing is likely AI-generated, reducing credibility.\n"
 
         self.score = maximum - deduction
 
         # NEW: round final score for cleaner display
         self.score = round(self.score, 2)
+        if self.score < 0:
+            self.score = 0
 
-        self.explanation += str(self.score) + "/100 Total Credibility Score"
+        # NEW: build structured breakdown object
+        self.score_breakdown = {
+            "title": {
+                "earned": title_earned,
+                "total": 10
+            },
+            "author": {
+                "earned": author_earned,
+                "total": 30
+            },
+            "date": {
+                "earned": date_earned,
+                "total": 15
+            },
+            "links": {
+                "earned": links_earned,
+                "total": 5
+            },
+            "ai": {
+                "earned": ai_earned,
+                "total": 40
+            }
+        }
 
         return self.score
