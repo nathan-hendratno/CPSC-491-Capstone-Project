@@ -47,6 +47,10 @@ def search_related_articles(query):
 
     return results
 
+@app.get("/")
+async def root():
+    return {"message": "Credible Sorcerer backend is running"}
+
 @app.post("/summarize")
 async def summarize_article(request: URLRequest):
     
