@@ -38,7 +38,7 @@ The system evaluates sources and presents users with a **credibility score**, **
 Navigate to the deployed site:
 
 ```
-[https://your-frontend-url.netlify.app](https://cpsc491capstone.netlify.app)
+https://cpsc491capstone.netlify.app
 ```
 
 ---
