@@ -86,14 +86,14 @@ async function analyzeArticle() {
       const formData = new FormData();
       formData.append("file", pdfFile);
 
-      response = await fetch("https://YOUR-RENDER-BACKEND.onrender.com/summarize-pdf", {
+      response = await fetch("https://cpsc-491-capstone-project.onrender.com/summarize-pdf", {
         method: "POST",
         body: formData
       });
     } 
     // Otherwise use URL endpoint
     else {
-      response = await fetch("https://YOUR-RENDER-BACKEND.onrender.com/summarize", {
+      response = await fetch("https://cpsc-491-capstone-project.onrender.com/summarize", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
