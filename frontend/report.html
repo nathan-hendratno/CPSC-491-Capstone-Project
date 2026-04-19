@@ -92,7 +92,6 @@
 
 <script>
 window.onload = function() {
-
   const data = JSON.parse(localStorage.getItem("analysisResult"));
 
   if (!data) {
@@ -108,9 +107,34 @@ window.onload = function() {
   const score = Math.round(data.score || 0);
   const scoreBar = document.getElementById("scoreBar");
   const scoreText = document.getElementById("scoreText");
+  const breakdown = data.score_breakdown || {};
 
-  scoreBar.style.width = score + "%";
-  scoreBar.innerText = score + "%";
+  function ratio(part) {
+    if (!part || !part.total) return 0;
+    return part.earned / part.total;
+  }
+
+  const metadataAvg = (ratio(breakdown.title) + ratio(breakdown.author) + ratio(breakdown.date)) / 3;
+  const citationStrength = ratio(breakdown.links);
+  const aiConfidence = ratio(breakdown.ai);
+
+  let metadataText = metadataAvg >= 0.8 ? "strong metadata" :
+                     metadataAvg >= 0.5 ? "moderate metadata" : "weak metadata";
+
+  let citationText = citationStrength >= 0.8 ? "strong citation support" :
+                     citationStrength >= 0.5 ? "limited citation support" : "very weak citation support";
+
+  let aiText = aiConfidence >= 0.8 ? "strong AI confidence" :
+               aiConfidence >= 0.5 ? "moderate AI confidence" : "weak AI confidence";
+
+  scoreText.innerText = `This source shows ${metadataText}, ${citationText}, and ${aiText}.`;
+
+  // animate score bar
+  scoreBar.style.transition = "width 1.2s ease-in-out";
+  setTimeout(() => {
+    scoreBar.style.width = score + "%";
+    scoreBar.innerText = score + "%";
+  }, 200);
 
   if (score >= 75) {
     scoreBar.classList.remove("bg-primary", "bg-warning", "bg-danger");
@@ -122,56 +146,6 @@ window.onload = function() {
     scoreBar.classList.remove("bg-primary", "bg-success", "bg-warning");
     scoreBar.classList.add("bg-danger");
   }
-
-  // Structured breakdown
-  const breakdown = data.score_breakdown || {};
-
-  function ratio(part) {
-    if (!part || !part.total) return 0;
-    return part.earned / part.total;
-  }
-
-  const titleRatio = ratio(breakdown.title);
-  const authorRatio = ratio(breakdown.author);
-  const dateRatio = ratio(breakdown.date);
-  const linksRatio = ratio(breakdown.links);
-  const aiRatio = ratio(breakdown.ai);
-
-  // Group signals
-  const metadataAvg = (titleRatio + authorRatio + dateRatio) / 3;
-  const citationStrength = linksRatio;
-  const aiConfidence = aiRatio;
-
-  let metadataText = "";
-  let citationText = "";
-  let aiText = "";
-
-  if (metadataAvg >= 0.8) {
-    metadataText = "Strong metadata";
-  } else if (metadataAvg >= 0.5) {
-    metadataText = "Moderate metadata";
-  } else {
-    metadataText = "Weak metadata";
-  }
-
-  if (citationStrength >= 0.8) {
-    citationText = "strong citation support";
-  } else if (citationStrength >= 0.5) {
-    citationText = "limited citation support";
-  } else {
-    citationText = "very weak citation support";
-  }
-
-  if (aiConfidence >= 0.8) {
-    aiText = "strong AI confidence";
-  } else if (aiConfidence >= 0.5) {
-    aiText = "moderate AI confidence";
-  } else {
-    aiText = "weak AI confidence";
-  }
-
-  scoreText.innerText = `${metadataText}, ${citationText}, ${aiText}.`;
-
 };
 </script>
 

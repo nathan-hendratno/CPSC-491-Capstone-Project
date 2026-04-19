@@ -158,48 +158,40 @@ window.onload = function () {
     return;
   }
 
-  // Left card: document preview
   document.getElementById("documentPreview").innerText =
     data.text_preview || data.summary || "No content available";
 
-  // Overall score
   const overallScore = Math.round(data.score || 0);
   document.getElementById("overallScore").innerText = overallScore + "/100";
 
-  // Explanation
   document.getElementById("scoreExplanation").innerText =
     data.explanation || "No explanation available.";
 
-  // Tone + Bias
   document.getElementById("toneDisplay").innerText = data.tone || "--";
   document.getElementById("biasDisplay").innerText = data.bias || "--";
 
-  // Verdict text
   const verdict = document.getElementById("scoreVerdict");
-  if (overallScore >= 75) {
-    verdict.innerText = "This source appears highly credible.";
+  if (overallScore >= 85) {
+    verdict.innerText = "This source appears highly credible and well-supported.";
     verdict.classList.remove("text-warning", "text-danger");
     verdict.classList.add("text-success");
-  } else if (overallScore >= 50) {
-    verdict.innerText = "This source appears moderately credible.";
+  } else if (overallScore >= 65) {
+    verdict.innerText = "This source appears reasonably credible, but some caution is advised.";
     verdict.classList.remove("text-success", "text-danger");
     verdict.classList.add("text-warning");
   } else {
-    verdict.innerText = "This source appears to have low credibility.";
+    verdict.innerText = "This source shows multiple credibility concerns.";
     verdict.classList.remove("text-success", "text-warning");
     verdict.classList.add("text-danger");
   }
 
-  // NEW: use structured breakdown directly
   const breakdown = data.score_breakdown || {};
 
-  // Helper: convert earned/total into percent
   function scoreToPercent(earned, total) {
     if (!total || isNaN(earned) || isNaN(total)) return 0;
     return Math.round((earned / total) * 100);
   }
 
-  // Helper: update mini bar
   function updateBar(barId, textId, earned, total) {
     const bar = document.getElementById(barId);
     const text = document.getElementById(textId);
@@ -208,8 +200,14 @@ window.onload = function () {
     const label = `${earned ?? "--"}/${total ?? "--"}`;
 
     text.innerText = label;
-    bar.style.width = percent + "%";
-    bar.innerText = percent + "%";
+    bar.style.transition = "width 1.1s ease-in-out";
+    bar.style.width = "0%";
+    bar.innerText = "0%";
+
+    setTimeout(() => {
+      bar.style.width = percent + "%";
+      bar.innerText = percent + "%";
+    }, 150);
 
     bar.classList.remove("bg-success", "bg-warning", "bg-danger", "bg-primary");
 
@@ -222,49 +220,11 @@ window.onload = function () {
     }
   }
 
-  // Expected backend structure:
-  // score_breakdown: {
-  //   title: { earned: 10, total: 10 },
-  //   author: { earned: 30, total: 30 },
-  //   date: { earned: 15, total: 15 },
-  //   links: { earned: 5, total: 5 },
-  //   ai: { earned: 24, total: 40 }
-  // }
-
-  updateBar(
-    "metaScoreBar",
-    "metaScoreText",
-    breakdown.title?.earned ?? 0,
-    breakdown.title?.total ?? 10
-  );
-
-  updateBar(
-    "authorScoreBar",
-    "authorScoreText",
-    breakdown.author?.earned ?? 0,
-    breakdown.author?.total ?? 30
-  );
-
-  updateBar(
-    "dateScoreBar",
-    "dateScoreText",
-    breakdown.date?.earned ?? 0,
-    breakdown.date?.total ?? 15
-  );
-
-  updateBar(
-    "citationScoreBar",
-    "citationScoreText",
-    breakdown.links?.earned ?? 0,
-    breakdown.links?.total ?? 5
-  );
-
-  updateBar(
-    "aiScoreBar",
-    "aiScoreText",
-    breakdown.ai?.earned ?? 0,
-    breakdown.ai?.total ?? 40
-  );
+  updateBar("metaScoreBar", "metaScoreText", breakdown.title?.earned ?? 0, breakdown.title?.total ?? 10);
+  updateBar("authorScoreBar", "authorScoreText", breakdown.author?.earned ?? 0, breakdown.author?.total ?? 30);
+  updateBar("dateScoreBar", "dateScoreText", breakdown.date?.earned ?? 0, breakdown.date?.total ?? 15);
+  updateBar("citationScoreBar", "citationScoreText", breakdown.links?.earned ?? 0, breakdown.links?.total ?? 5);
+  updateBar("aiScoreBar", "aiScoreText", breakdown.ai?.earned ?? 0, breakdown.ai?.total ?? 40);
 };
 </script>
 </body>
