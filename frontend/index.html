@@ -225,13 +225,13 @@
         clearTimeout(timeoutId);
         console.error("Error:", error);
 
+        resetForm();
+
         if (error.name === "AbortError") {
           showError("The request took too long and timed out. Please try again.", true);
         } else {
           showError("Analysis failed. Please check the URL or PDF and try again.", true);
         }
-
-        resetForm();
       }
     }
   </script>
